@@ -12,4 +12,7 @@
 
 #define PRINT_UL(num) printf("[%s:%lu] %s = %lu\n", __PRETTY_FUNCTION__, __LINE__, #num, num);
 
+#define PRINT_D(num) printf("[%s:%lu] %s = %d\n", __PRETTY_FUNCTION__, __LINE__, #num, num);
+
+
 #endif

@@ -18,9 +18,10 @@ StatusCode ListCtor(List_t *list, size_t capacity)
         return LIST_BAD_ALLOC;
     
     list->capacity = capacity;
-    list->front = 1;
-    list->back  = 1;
-    list->free  = 1;
+    list->front    = 1;
+    list->back     = 1;
+    list->free     = 1;
+    list->sorted   = 1;
 
     for (size_t index = 1; index < capacity; ++index)
     {
@@ -163,12 +164,12 @@ StatusCode ListInsertAfter (List_t *list, size_t physical_index, Val_t value)
     if (status != LIST_IS_OK)
         return status;
 
-    if (physical_index != list->back)
-        list->sorted = 0;
-
     if (physical_index < 1 || physical_index > list->capacity + 1 ||
         list->data[physical_index].prev == FREE_INDEX && (list->back != list->front || physical_index != list->back))
         return INVALID_INSERT_INDEX;
+
+    if (physical_index != list->back)
+        list->sorted = 0;
 
     if (list->free == 0)
     {
@@ -304,47 +305,110 @@ StatusCode ListPushFront(List_t *list, Val_t value)
     return ListInsertBefore(list, ListFront(list), value);
 }
 
-// Val_t      ListRemove(List_t *list, size_t physical_index)
-// {
-//     if (ListVerify(list) != LIST_IS_OK)
-//         return DEAD_VALUE;
+Val_t      ListRemove(List_t *list, size_t physical_index)
+{
+    if (ListVerify(list) != LIST_IS_OK)
+        return DEAD_VALUE;
     
-//     if (physical_index == 0 || physical_index > list->capacity + 1 ||
-//         list->data[physical_index].prev == FREE_INDEX)
-//         return DEAD_VALUE;
+    if (physical_index == 0 || physical_index > list->capacity + 1 ||
+        list->data[physical_index].prev == FREE_INDEX)
+        return DEAD_VALUE;
     
-//     if (physical_index == list->front)
-//     {
-//         if (physical_index == list->back)
-//             if (list->data[physical_index].prev == FREE_INDEX)
-//                 return DEAD_VALUE;
-//             else
-//             {
-//                 Val_t elem = list->data[physical_index].value;
+    if (physical_index == list->front)
+    {
+        if (physical_index == list->back)
+            if (list->data[physical_index].prev == FREE_INDEX)
+                return DEAD_VALUE;
+            else
+            {
+                Val_t value = list->data[physical_index].value;
                 
-//                 list->data[physical_index].prev  = FREE_INDEX;
-//                 list->data[physical_index].next  = list->free;
-//                 list->data[physical_index].value = DEAD_VALUE;
+                list->data[physical_index].prev  = FREE_INDEX;
+                list->data[physical_index].next  = list->free;
+                list->data[physical_index].value = DEAD_VALUE;
 
-//                 list->free = physical_index;
+                list->free = physical_index;
 
-//                 return elem;
-//             }
-//         else
+                return value;
+            }
+        else
+        {
+            Val_t value = list->data[list->front].value;
 
-//     }
-//     else
-//     if (physical_index == list->back)
-//     {
+            size_t new_front = list->data[list->front].next;
+                
+            list->data[new_front].prev  = 0;
+                
+            list->data[list->front].prev  = FREE_INDEX;
+            list->data[list->front].next  = list->free;
+            list->data[list->front].value = DEAD_VALUE;
+
+            list->free  = list->front;
+
+            list->front = new_front;
+
+            return value;
+        }
+    }
+    else
+    if (physical_index == list->back)
+    {
+        Val_t value = list->data[list->back].value;
+
+        size_t new_back = list->data[list->back].prev;
+
+        list->data[new_back].next = 0;
         
-//     }
-//     else
-//     {
+        list->data[list->back].prev  = FREE_INDEX;
+        list->data[list->back].next  = list->free;
+        list->data[list->back].value = DEAD_VALUE;
 
-//     }
+        list->free = list->back;
+
+        list->back = new_back;
+
+        return value;
+    }
+    else
+    {
+        list->sorted = 0;
+
+        size_t next = list->data[physical_index].next;
+        size_t prev = list->data[physical_index].prev;
     
+        Val_t value = list->data[physical_index].value;
 
-// }
+        list->data[physical_index].prev  = FREE_INDEX;
+        list->data[physical_index].next  = list->free;
+        list->data[physical_index].value = DEAD_VALUE;
+
+        list->free = physical_index;
+
+        list->data[next].prev = prev;
+        list->data[prev].next = next;
+
+        return value;
+    }
+
+    assert(false);
+    return DEAD_VALUE;
+}
+
+Val_t      ListPopBack  (List_t *list)
+{
+    if (ListVerify(list) != LIST_IS_OK)
+        return DEAD_VALUE;
+
+    return ListRemove(list, ListBack(list));
+}
+
+Val_t      ListPopFront (List_t *list)
+{
+    if (ListVerify(list) != LIST_IS_OK)
+        return DEAD_VALUE;
+
+    return ListRemove(list, ListFront(list));
+}
 
 StatusCode ListVerify(List_t *list)
 {
@@ -512,7 +576,7 @@ static const char *ColorPicker(List_t *list, size_t index)
 
     if ((ListVerify(list) & LIST_INDEXES_RUINED) != 0)
         return colors[6];
-    else
+
     if (index <= list->capacity + 1 && list->data[index].prev == FREE_INDEX)
         return colors[1];
     else
@@ -558,6 +622,10 @@ StatusCode ListDump(List_t *list)
     fprintf(dump_file, "    free  [fillcolor=\"%s\", "
                        "    label=\"FREE = %lu\"];\n",
                        ColorPicker(list, list->free), list->free);
+
+    fprintf(dump_file, "    sorted [fillcolor=\"%s\","
+                       "    label=\"SORTED = %d\"];\n",
+                       ColorPicker(list, FREE_INDEX / 2), list->sorted);                   
 
     fputs("    node [color=black, shape=record, style=\"rounded, filled\"];\n", dump_file);
     fputs("\n", dump_file);

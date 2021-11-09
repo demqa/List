@@ -14,19 +14,27 @@ int main()
 
     error = ListInsertAfter(&list, 1, 15);
     printf("error = %lu\n", error);
+    ListDump(&list);
 
-    error = ListInsertAfter(&list, 1, 30);
-    printf("error = %lu\n", error);
-
-    error = ListInsertAfter(&list, 2, 45);
-    printf("error = %lu\n", error);
-
+    // Val_t x = ListRemove(&list, 1);
+    // printf("x = %d\n", x);
     // ListDump(&list);
+
+    error = ListInsertAfter(&list, 1, 45);
+    printf("error = %lu\n", error);
+    ListDump(&list);
 
     error = ListInsertAfter(&list, 2, 60);
     printf("error = %lu\n", error);
-
     ListDump(&list);
+
+    error = ListInsertAfter(&list, 3, 75);
+    printf("error = %lu\n", error);
+    ListDump(&list);
+
+    // x = ListRemove(&list, 1);
+    // printf("x = %d\n", x);
+    // ListDump(&list);
 
     if (error = ListVerify(&list))
         printf("error = %lu\n", error);
