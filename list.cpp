@@ -585,6 +585,20 @@ StatusCode ListClear   (List_t *list)
     return (StatusCode) status;
 }
 
+// returns physical index when found
+// returns 0 if not found or there is some error
+size_t     ListValueIndex(List_t *list, Val_t value)
+{
+    if (ListVerify(list) != LIST_IS_OK)
+        return 0;
+    
+    size_t elem = list->front;
+    while (elem != 0 && list->data[elem].value != value)
+        elem = list->data[elem].next;
+    
+    return elem;
+}
+
 StatusCode ListVerify(List_t *list)
 {
     if (list == nullptr)
