@@ -213,6 +213,8 @@ static Elem_t__ *ListResize(List_t *list, ResizeMode mode)
         if (new_capacity == list->capacity)
             return list->data;
 
+        // TODO
+
         // if (list->sorted == 0 || list->back > list->capacity)
         // {
         //     StatusCode status = ListLinearize(list);
@@ -260,6 +262,55 @@ static Elem_t__ *ListResize(List_t *list, ResizeMode mode)
     }
 
     return nullptr;
+}
+
+StatusCode ListLinearize(List_t *list)
+{
+    StatusCode status = ListVerify(list);
+    if (status != LIST_IS_OK)
+        return status;
+    
+    Elem_t__ *new_data = (Elem_t__ *) calloc(1 + list->capacity, sizeof(Elem_t__));
+    if (new_data == nullptr)
+        return LIST_BAD_ALLOC;
+
+    new_data[0].prev  = 0;
+    new_data[0].next  = 0;
+    new_data[0].value = 0;
+
+    size_t cur_ptr = list->front;
+    if (list->size == 0)
+        cur_ptr = 0;
+
+    list->free = 0;
+    for (size_t index = 1; index <= list->capacity; ++index)
+    {
+        if (cur_ptr != 0)
+        {
+            new_data[index].prev  = (index == 1 ? 0 : index - 1);
+            new_data[index].next  = (index == list->size ? 0 : index + 1);
+            new_data[index].value = list->data[cur_ptr].value;
+        }
+        else
+        {
+            if (list->free == 0) list->free = index;
+            
+            new_data[index].prev  = FREE_INDEX;
+            new_data[index].next  = (index == list->capacity ? 0 : index + 1);
+            new_data[index].value = DEAD_VALUE;
+        }
+
+        cur_ptr = list->data[cur_ptr].next;
+    }
+
+    free(list->data);
+
+    list->sorted = 1;
+    list->front  = 1;
+    list->back   = (list->size == 0 ? 1 : list->size);
+    list->data   = new_data;
+
+    return LIST_IS_OK;
 }
 
 StatusCode ListInsertAfter (List_t *list, size_t physical_index, Val_t value)

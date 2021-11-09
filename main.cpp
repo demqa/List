@@ -23,17 +23,21 @@ int main()
 
     ListDump(&list);
 
-    for (int i = 1; i < 7; ++i)
-        ListPopBack(&list);
+    for (int i = 1; i < 6; ++i)
+        ListPopFront(&list);
 
     ListDump(&list);
 
-    for (int i = 1; i < 7; ++i)
+    ListLinearize(&list);
+
+    ListDump(&list);
+
+    for (int i = 1; i < 8; ++i)
     {
         ListPopBack(&list);
         ListDump(&list);
     }
-    
+
     // Val_t x = ListRemove(&list, 1);
     // printf("x = %d\n", x);
     // ListDump(&list);

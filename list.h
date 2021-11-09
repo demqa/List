@@ -86,14 +86,15 @@ const size_t FREE_INDEX = (size_t)(-1);
 
 StatusCode ListCtor  (List_t *list, size_t initial_capacity);
 /* invisible 4 user */
-Elem_t__ *ListResize   (List_t *list);
+// Elem_t__ *ListResize   (List_t *list);
 /*                  */
 StatusCode ListDtor  (List_t *list);
 StatusCode ListVerify(List_t *list);
 StatusCode ListDump  (List_t *list);
 
-/* this functions will not be called from list itself */
 StatusCode ListLinearize(List_t *list);
+
+/* this function will not be called from list itself */
 StatusCode ListClear    (List_t *list);
 
 /* O(logical_index) when unsorted, O(1) when sorted */
