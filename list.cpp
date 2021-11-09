@@ -324,11 +324,19 @@ Val_t      ListRemove(List_t *list, size_t physical_index)
         list->data[physical_index].prev == FREE_INDEX)
         return DEAD_VALUE;
     
+    list->size--;
+
     if (physical_index == list->front)
     {
         if (physical_index == list->back)
             if (list->data[physical_index].prev == FREE_INDEX)
+            {
+                //  i do list->size-- for all cases
+                //  so I have to increment in this case
+                
+                assert(++list->size == 0);
                 return DEAD_VALUE;
+            }
             else
             {
                 Val_t value = list->data[physical_index].value;
