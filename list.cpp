@@ -208,21 +208,18 @@ static Elem_t__ *ListResize(List_t *list, ResizeMode mode)
         new_capacity = list->capacity / 2;
         assert(list->size <= new_capacity);
 
-        if (new_capacity < 8) new_capacity = 8;
+        if (new_capacity < 4) new_capacity = 4;
 
         if (new_capacity == list->capacity)
             return list->data;
 
-        // TODO
-
-        // if (list->sorted == 0 || list->back > list->capacity)
-        // {
-        //     StatusCode status = ListLinearize(list);
-        //     if (status != LIST_IS_OK)
-        //         return nullptr;
-        // }
-
-        PRINT_LINE;
+        if (list->sorted == 0 ||
+            list->sorted == 1 && list->back > new_capacity)
+        {   
+            StatusCode status = ListLinearize(list);
+            if (status != LIST_IS_OK)
+                return nullptr;
+        }
 
         list->free = 0;
         for (size_t index = new_capacity; index >= 1; --index)
@@ -241,8 +238,6 @@ static Elem_t__ *ListResize(List_t *list, ResizeMode mode)
                 }
             }
         }
-
-        PRINT_LINE;
 
         Elem_t__ *new_data = (Elem_t__ *) realloc(list->data, (1 + new_capacity) * sizeof(Elem_t__));
         if (new_data == nullptr)
@@ -269,7 +264,10 @@ StatusCode ListLinearize(List_t *list)
     StatusCode status = ListVerify(list);
     if (status != LIST_IS_OK)
         return status;
-    
+
+    if (list->sorted == 1 && list->data[1].prev != FREE_INDEX)
+        return LIST_IS_OK;
+        
     Elem_t__ *new_data = (Elem_t__ *) calloc(1 + list->capacity, sizeof(Elem_t__));
     if (new_data == nullptr)
         return LIST_BAD_ALLOC;
@@ -287,7 +285,7 @@ StatusCode ListLinearize(List_t *list)
     {
         if (cur_ptr != 0)
         {
-            new_data[index].prev  = (index == 1 ? 0 : index - 1);
+            new_data[index].prev  = (index == 1          ? 0 : index - 1);
             new_data[index].next  = (index == list->size ? 0 : index + 1);
             new_data[index].value = list->data[cur_ptr].value;
         }
@@ -707,8 +705,7 @@ StatusCode ListVerify(List_t *list)
     {
         if (list->data[place].next == 0)
         {
-            if (place != list->capacity               ||
-                list->data[place].prev  != FREE_INDEX ||
+            if (list->data[place].prev  != FREE_INDEX ||
                 list->data[place].value != DEAD_VALUE)
                 error |= LIST_DATA_RUINED;
             size++;
