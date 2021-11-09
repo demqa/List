@@ -561,14 +561,28 @@ Val_t      ListRemove(List_t *list, size_t physical_index)
     return value;
 }
 
-Val_t      ListPopBack  (List_t *list)
+Val_t      ListPopBack (List_t *list)
 {
     return ListRemove(list, ListBack(list));
 }
 
-Val_t      ListPopFront (List_t *list)
+Val_t      ListPopFront(List_t *list)
 {
     return ListRemove(list, ListFront(list));
+}
+
+StatusCode ListClear   (List_t *list)
+{
+    int status = ListVerify(list);
+    if (status != LIST_IS_OK)
+        return (StatusCode) status;
+
+    while (list->size != 0)
+        ListPopBack(list);
+
+    status |= ListLinearize(list);
+
+    return (StatusCode) status;
 }
 
 StatusCode ListVerify(List_t *list)
