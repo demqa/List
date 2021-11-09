@@ -26,7 +26,7 @@ enum StatusCode
     LIST_BAD_ALLOC             = 1 << 3,
 
     LIST_CTY_CANT_BE_ZERO      = 1 << 4,
-    
+
     LIST_FRONT_BIGGER_THAN_CTY = 1 << 5,
     LIST_BACK__BIGGER_THAN_CTY = 1 << 6,
 
@@ -45,10 +45,17 @@ enum StatusCode
     // PROCESSING_ERRORS
 
     INVALID_INSERT_INDEX       = 1 << 15,
+    LIST_WRONG_RESIZE_MODE     = 1 << 16,
 
 
     DUMPED                     = 1 << 28,
 
+};
+
+enum ResizeMode
+{
+    INCREASE_CTY  = 0xEA71,
+    DECREASE_CTY  = 0xDE7A,
 };
 
 struct Elem_t__
@@ -72,7 +79,7 @@ struct List_t
 
     u_int8_t sorted;
 
-    StatusCode error;
+    int error;
 };
 
 const size_t FREE_INDEX = (size_t)(-1);

@@ -159,15 +159,107 @@ size_t     ListPrev  (List_t *list, size_t physical_index)
     return list->data[physical_index].prev;
 }
 
-Elem_t__  *ListResize(List_t *list)
+static Elem_t__ *ListResize(List_t *list, ResizeMode mode)
 {
-    StatusCode status = ListVerify(list);
-    if (status != LIST_IS_OK)
+    if (ListVerify(list) != LIST_IS_OK)
         return nullptr;
+    
+    size_t new_capacity = 0;
+    
+    if (mode == INCREASE_CTY)
+    {
+        new_capacity = list->capacity * 2;
 
-    // TODO
+        Elem_t__ *new_data = (Elem_t__ *) realloc(list->data, (1 + new_capacity) * sizeof(Elem_t__));
+        if (new_data == nullptr)
+        {
+            return nullptr;
+        }
 
-    return list->data;
+        size_t new_free = list->capacity + 1;
+
+        size_t elem = list->free;
+        while (new_data[elem].next != 0)
+        {
+            elem = list->data[elem].next;
+        }
+
+        if (elem == list->free)
+            list->free = new_free;
+        else
+            new_data[elem].next = new_free;
+
+        for (size_t index = new_free; index < new_free + list->capacity; ++index)
+        {
+            new_data[index].prev  = FREE_INDEX;
+            new_data[index].next  = index + 1;
+            new_data[index].value = DEAD_VALUE;
+        }
+
+        new_data[new_capacity].next = 0;
+
+        list->capacity = new_capacity;
+
+        return new_data;
+    }
+    else
+    if (mode == DECREASE_CTY)
+    {
+        new_capacity = list->capacity / 2;
+        assert(list->size <= new_capacity);
+
+        if (new_capacity < 8) new_capacity = 8;
+
+        if (new_capacity == list->capacity)
+            return list->data;
+
+        // if (list->sorted == 0 || list->back > list->capacity)
+        // {
+        //     StatusCode status = ListLinearize(list);
+        //     if (status != LIST_IS_OK)
+        //         return nullptr;
+        // }
+
+        PRINT_LINE;
+
+        list->free = 0;
+        for (size_t index = new_capacity; index >= 1; --index)
+        {
+            if (list->data[index].prev == FREE_INDEX)
+            {
+                if (list->free == 0)
+                {
+                    list->free = index;
+                    list->data[index].next = 0;
+                }
+                else
+                {
+                    list->data[index].next = list->free;
+                    list->free = index;
+                }
+            }
+        }
+
+        PRINT_LINE;
+
+        Elem_t__ *new_data = (Elem_t__ *) realloc(list->data, (1 + new_capacity) * sizeof(Elem_t__));
+        if (new_data == nullptr)
+        {
+            list->error |= LIST_BAD_ALLOC;
+            return nullptr;
+        }
+
+        list->capacity = new_capacity;
+
+        return new_data;
+    }
+    else
+    {
+        list->error |= LIST_WRONG_RESIZE_MODE;
+        return nullptr;
+    }
+
+    return nullptr;
 }
 
 StatusCode ListInsertAfter (List_t *list, size_t physical_index, Val_t value)
@@ -179,7 +271,7 @@ StatusCode ListInsertAfter (List_t *list, size_t physical_index, Val_t value)
     if (physical_index == 0 || physical_index > list->capacity
         ||
         list->data[physical_index].prev == FREE_INDEX &&
-        (list->back != list->front || physical_index != list->back))
+       (list->size != 0 || physical_index != list->back))
         return INVALID_INSERT_INDEX;
 
     if (physical_index != list->back)
@@ -187,7 +279,7 @@ StatusCode ListInsertAfter (List_t *list, size_t physical_index, Val_t value)
 
     if (list->free == 0)
     {
-        Elem_t__ *ptr = ListResize(list);
+        Elem_t__ *ptr = ListResize(list, INCREASE_CTY);
         if (ptr == nullptr)
         {
             return LIST_BAD_ALLOC;
@@ -195,6 +287,8 @@ StatusCode ListInsertAfter (List_t *list, size_t physical_index, Val_t value)
 
         list->data = ptr;
     }
+
+    assert(list->free != 0);
 
     if (list->front == physical_index && list->front == list->back &&
         list->data[list->front].prev == FREE_INDEX)
@@ -269,7 +363,7 @@ StatusCode ListInsertBefore(List_t *list, size_t physical_index, Val_t value)
 
     if (list->free == 0)
     {
-        Elem_t__ *ptr = ListResize(list);
+        Elem_t__ *ptr = ListResize(list, INCREASE_CTY);
         if (ptr == nullptr)
         {
             return LIST_BAD_ALLOC;
@@ -277,6 +371,8 @@ StatusCode ListInsertBefore(List_t *list, size_t physical_index, Val_t value)
 
         list->data = ptr;
     }
+
+    assert(list->free != 0);
 
     if (physical_index == list->front)
     {
@@ -326,6 +422,8 @@ Val_t      ListRemove(List_t *list, size_t physical_index)
     
     list->size--;
 
+    Val_t value = DEAD_VALUE;
+
     if (physical_index == list->front)
     {
         if (physical_index == list->back)
@@ -333,25 +431,23 @@ Val_t      ListRemove(List_t *list, size_t physical_index)
             {
                 //  i do list->size-- for all cases
                 //  so I have to increment in this case
-                
+
                 assert(++list->size == 0);
                 return DEAD_VALUE;
             }
             else
             {
-                Val_t value = list->data[physical_index].value;
+                value = list->data[physical_index].value;
                 
                 list->data[physical_index].prev  = FREE_INDEX;
                 list->data[physical_index].next  = list->free;
                 list->data[physical_index].value = DEAD_VALUE;
 
                 list->free = physical_index;
-
-                return value;
             }
         else
         {
-            Val_t value = list->data[list->front].value;
+            value = list->data[list->front].value;
 
             size_t new_front = list->data[list->front].next;
                 
@@ -364,14 +460,12 @@ Val_t      ListRemove(List_t *list, size_t physical_index)
             list->free  = list->front;
 
             list->front = new_front;
-
-            return value;
         }
     }
     else
     if (physical_index == list->back)
     {
-        Val_t value = list->data[list->back].value;
+        value = list->data[list->back].value;
 
         size_t new_back = list->data[list->back].prev;
 
@@ -384,8 +478,6 @@ Val_t      ListRemove(List_t *list, size_t physical_index)
         list->free = list->back;
 
         list->back = new_back;
-
-        return value;
     }
     else
     {
@@ -394,7 +486,7 @@ Val_t      ListRemove(List_t *list, size_t physical_index)
         size_t next = list->data[physical_index].next;
         size_t prev = list->data[physical_index].prev;
     
-        Val_t value = list->data[physical_index].value;
+        value = list->data[physical_index].value;
 
         list->data[physical_index].prev  = FREE_INDEX;
         list->data[physical_index].next  = list->free;
@@ -404,12 +496,20 @@ Val_t      ListRemove(List_t *list, size_t physical_index)
 
         list->data[next].prev = prev;
         list->data[prev].next = next;
-
-        return value;
     }
 
-    assert(false);
-    return DEAD_VALUE;
+    if (list->size <= list->capacity / 4)
+    {
+        Elem_t__ *ptr = ListResize(list, DECREASE_CTY);
+        if (ptr == nullptr)
+        {
+            return DEAD_VALUE;
+        }
+
+        list->data = ptr;
+    }
+
+    return value;
 }
 
 Val_t      ListPopBack  (List_t *list)
@@ -647,7 +747,7 @@ StatusCode ListDump(List_t *list)
                        "    label=\"SORTED = %d\"];\n",
                        ColorPicker(list, FREE_INDEX / 2), list->sorted);
 
-    fprintf(dump_file, "    sorted [fillcolor=\"%s\","
+    fprintf(dump_file, "    size   [fillcolor=\"%s\","
                        "    label=\"SIZE = %d\"];\n",
                        ColorPicker(list, FREE_INDEX / 2), list->size);                     
 

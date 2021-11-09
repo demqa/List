@@ -1,6 +1,8 @@
 #include "list.h"
 #include <stdio.h>
 
+#include "debug_lib.h"
+
 int main()
 {
     List_t list = {};
@@ -8,50 +10,36 @@ int main()
     StatusCode error = LIST_IS_OK;
     size_t     index = 0;
 
-    if (error = ListCtor(&list, 7))
+    if (error = ListCtor(&list, 4))
         printf("error = %lu\n", error);
-
-    // ListDump(&list);
+     ListDump(&list);
 
     error = ListInsertAfter(&list, 1, 15);
     printf("error = %lu\n", error);
-    // ListDump(&list);
+    ListDump(&list);
 
+    for (int i = 1; i < 12; ++i)
+        ListInsertAfter(&list, i, 1000 - 7 * i);
+
+    ListDump(&list);
+
+    for (int i = 1; i < 7; ++i)
+        ListPopBack(&list);
+
+    ListDump(&list);
+
+    for (int i = 1; i < 7; ++i)
+    {
+        ListPopBack(&list);
+        ListDump(&list);
+    }
+    
     // Val_t x = ListRemove(&list, 1);
     // printf("x = %d\n", x);
     // ListDump(&list);
 
-    error = ListInsertAfter(&list, 1, 45);
-    printf("error = %lu\n", error);
-    // ListDump(&list);
-
-    error = ListInsertAfter(&list, 2, 60);
-    printf("error = %lu\n", error);
-    // ListDump(&list);
-
-    error = ListInsertAfter(&list, 3, 75);
-    printf("error = %lu\n", error);
-    ListDump(&list);
-
-    ListPopFront(&list);
-    ListPopFront(&list);
-
-    ListDump(&list);
-
-    ListPushFront(&list, 123);
-    ListPushFront(&list, 987);
-
-    ListDump(&list);
-
-    index = ListReturnPhysIndex(&list, 3);
-    printf("index = %lu\n", index);
-
-    ListPushFront(&list, 1337);
-
-    ListDump(&list);
-
-    index = ListReturnPhysIndex(&list, 5);
-    printf("index = %lu\n", index);
+    // ListPopFront(&list);
+    // ListPopFront(&list);
 
     // x = ListRemove(&list, 1);
     // printf("x = %d\n", x);

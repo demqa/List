@@ -1,49 +1,51 @@
 digraph structs {
     node [color=black, shape=box, style="rounded, filled"];
     rankdir=LR;
-    front [fillcolor="#1CD3A2",     label="FRONT = 5"];
-    back  [fillcolor="#FF7538",     label="BACK = 4"];
-    free  [fillcolor="#42AAFF",     label="FREE = 6"];
-    sorted [fillcolor="#E34234",    label="SORTED = 0"];
+    front [fillcolor="#42AAFF",     label="FRONT = 1"];
+    back  [fillcolor="#42AAFF",     label="BACK = 1"];
+    free  [fillcolor="#42AAFF",     label="FREE = 1"];
+    sorted [fillcolor="#E34234",    label="SORTED = 1"];
+    size   [fillcolor="#E34234",    label="SIZE = 0"];
     node [color=black, shape=record, style="rounded, filled"];
 
     edge [style=invis, constraint=true];
     node0 [fillcolor="#5035DE",label=" 0 | { <p> 0 | 0 | <n> 0}"];
-    node1 [fillcolor="#E6A8D7",label=" 1 | { <p> 5 | 987 | <n> 2}"];
+    node1 [fillcolor="#42AAFF",label=" 1 | { <p> -1 | 993 | <n> 2}"];
     node0 -> node1;
-    node2 [fillcolor="#E6A8D7",label=" 2 | { <p> 1 | 123 | <n> 3}"];
+    node2 [fillcolor="#42AAFF",label=" 2 | { <p> -1 | 993 | <n> 3}"];
     node1 -> node2;
-    node3 [fillcolor="#E6A8D7",label=" 3 | { <p> 2 | 60 | <n> 4}"];
+    node3 [fillcolor="#42AAFF",label=" 3 | { <p> -1 | 993 | <n> 4}"];
     node2 -> node3;
-    node4 [fillcolor="#FF7538",label=" 4 | { <p> 3 | 75 | <n> 0}"];
+    node4 [fillcolor="#42AAFF",label=" 4 | { <p> -1 | 993 | <n> 5}"];
     node3 -> node4;
-    node5 [fillcolor="#1CD3A2",label=" 5 | { <p> 0 | 1337 | <n> 1}"];
+    node5 [fillcolor="#42AAFF",label=" 5 | { <p> -1 | 993 | <n> 6}"];
     node4 -> node5;
     node6 [fillcolor="#42AAFF",label=" 6 | { <p> -1 | 993 | <n> 7}"];
     node5 -> node6;
-    node7 [fillcolor="#42AAFF",label=" 7 | { <p> -1 | 993 | <n> 0}"];
+    node7 [fillcolor="#42AAFF",label=" 7 | { <p> -1 | 993 | <n> 8}"];
     node6 -> node7;
+    node8 [fillcolor="#42AAFF",label=" 8 | { <p> -1 | 993 | <n> 0}"];
+    node7 -> node8;
 
     edge [style=solid, constraint=false];
     node1: <n> -> node2;
-    node1: <p> -> node5;
 
     node2: <n> -> node3;
-    node2: <p> -> node1;
 
     node3: <n> -> node4;
-    node3: <p> -> node2;
 
-    node4: <p> -> node3;
+    node4: <n> -> node5;
 
-    node5: <n> -> node1;
+    node5: <n> -> node6;
 
     node6: <n> -> node7;
+
+    node7: <n> -> node8;
 
 
 
     edge [style=bold, constraint=false];
-    front -> node5; 
-    back  -> node4; 
-    free  -> node6; 
+    front -> node1; 
+    back  -> node1; 
+    free  -> node1; 
 }
