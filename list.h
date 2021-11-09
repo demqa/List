@@ -26,6 +26,7 @@ enum StatusCode
     LIST_BAD_ALLOC             = 1 << 3,
 
     LIST_CTY_CANT_BE_ZERO      = 1 << 4,
+    
     LIST_FRONT_BIGGER_THAN_CTY = 1 << 5,
     LIST_BACK__BIGGER_THAN_CTY = 1 << 6,
 

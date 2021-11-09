@@ -22,6 +22,7 @@ StatusCode ListCtor(List_t *list, size_t capacity)
     list->back     = 1;
     list->free     = 1;
     list->sorted   = 1;
+    list->size     = 0;
 
     for (size_t index = 1; index < capacity; ++index)
     {
@@ -93,7 +94,7 @@ StatusCode ListIsEmpty(List_t *list)
     
     if (list->back == 0 && list->front == 0 && list->sorted   == 0 &&
         list->free == 0 && list->error == 0 && list->capacity == 0 &&
-        list->data == nullptr)
+        list->size == 0 && list->data == nullptr)
         return LIST_IS_EMPTY;
     
     return LIST_STATUS_UNKNOWN;
@@ -164,6 +165,8 @@ Elem_t__  *ListResize(List_t *list)
     if (status != LIST_IS_OK)
         return nullptr;
 
+    // TODO
+
     return list->data;
 }
 
@@ -173,8 +176,10 @@ StatusCode ListInsertAfter (List_t *list, size_t physical_index, Val_t value)
     if (status != LIST_IS_OK)
         return status;
 
-    if (physical_index < 1 || physical_index > list->capacity + 1 ||
-        list->data[physical_index].prev == FREE_INDEX && (list->back != list->front || physical_index != list->back))
+    if (physical_index == 0 || physical_index > list->capacity
+        ||
+        list->data[physical_index].prev == FREE_INDEX &&
+        (list->back != list->front || physical_index != list->back))
         return INVALID_INSERT_INDEX;
 
     if (physical_index != list->back)
@@ -235,6 +240,8 @@ StatusCode ListInsertAfter (List_t *list, size_t physical_index, Val_t value)
         list->free = new_free;
     }
 
+    list->size++;
+
     status = ListVerify(list);
     if (status != LIST_IS_OK)
         return status;
@@ -283,6 +290,8 @@ StatusCode ListInsertBefore(List_t *list, size_t physical_index, Val_t value)
 
         list->front = list->free;
         list->free  = new_free;
+
+        list->size++;
     }
     else
     {
@@ -298,19 +307,11 @@ StatusCode ListInsertBefore(List_t *list, size_t physical_index, Val_t value)
 
 StatusCode ListPushBack(List_t *list, Val_t value)
 {
-    StatusCode status = ListVerify(list);
-    if (status != LIST_IS_OK)
-        return status;
-
     return ListInsertAfter(list, ListBack(list), value);
 }
 
 StatusCode ListPushFront(List_t *list, Val_t value)
 {
-    StatusCode status = ListVerify(list);
-    if (status != LIST_IS_OK)
-        return status;
-
     return ListInsertBefore(list, ListFront(list), value);
 }
 
