@@ -63,7 +63,9 @@ StatusCode ListDtor(List_t *list)
     list->free     = 0xFAAC;
     list->front    = 0xF1FA;
 
+    list->size     = 0xBABE;
     list->sorted   = 0x77;
+
     list->error    = (StatusCode) 0xD70D;
 
     return LIST_IS_DESTRUCTED;
@@ -77,7 +79,8 @@ StatusCode ListIsDestructed(List_t *list)
     if (list->data   == (Elem_t__ *)(1000 - 7)             &&
         list->back   == 0xEBA1 && list->capacity == 0xDEAD &&
         list->free   == 0xFAAC && list->front    == 0xF1FA &&
-        list->sorted == 0x77   && list->error    == (StatusCode) 0xD70D)
+        list->size   == 0xBABE && list->sorted   == 0x77   &&
+        list->error    == (StatusCode) 0xD70D)
         return LIST_IS_DESTRUCTED;
     
     return LIST_STATUS_UNKNOWN;
@@ -96,16 +99,18 @@ StatusCode ListIsEmpty(List_t *list)
     return LIST_STATUS_UNKNOWN;
 }
 
-// logical first elem has index 0
+// logical first elem has index 1
 size_t     ListReturnPhysIndex(List_t *list, size_t logical_index)
 {
-    if (ListVerify(list) != LIST_IS_OK)
+    if (ListVerify(list) != LIST_IS_OK  ||
+        logical_index >  list->capacity ||
+        logical_index == 0)
         return 0;
-    
-    if (list->sorted)
-        return list->front + logical_index;
 
-    size_t counter = 0;
+    if (list->sorted)
+        return list->front + logical_index - 1;
+
+    size_t counter = 1;
     size_t index = list->front;
 
     while (counter < logical_index)
@@ -135,7 +140,9 @@ size_t     ListBack  (List_t *list)
 
 size_t     ListNext  (List_t *list, size_t physical_index)
 {
-    if (ListVerify(list) != LIST_IS_OK)
+    if (ListVerify(list) != LIST_IS_OK ||
+        physical_index == 0            ||
+        physical_index > list->capacity)
         return 0;
     
     return list->data[physical_index].next;
@@ -143,7 +150,9 @@ size_t     ListNext  (List_t *list, size_t physical_index)
 
 size_t     ListPrev  (List_t *list, size_t physical_index)
 {
-    if (ListVerify(list) != LIST_IS_OK)
+    if (ListVerify(list) != LIST_IS_OK ||
+        physical_index == 0            ||
+        physical_index > list->capacity)
         return 0;
     
     return list->data[physical_index].prev;
@@ -396,17 +405,11 @@ Val_t      ListRemove(List_t *list, size_t physical_index)
 
 Val_t      ListPopBack  (List_t *list)
 {
-    if (ListVerify(list) != LIST_IS_OK)
-        return DEAD_VALUE;
-
     return ListRemove(list, ListBack(list));
 }
 
 Val_t      ListPopFront (List_t *list)
 {
-    if (ListVerify(list) != LIST_IS_OK)
-        return DEAD_VALUE;
-
     return ListRemove(list, ListFront(list));
 }
 
@@ -431,6 +434,9 @@ StatusCode ListVerify(List_t *list)
 
     if (list->back  > list->capacity)
         error |= (LIST_BACK__BIGGER_THAN_CTY | LIST_INDEXES_RUINED);
+
+    if (list->size > list->capacity)
+        error |= LIST_SIZE_RUINED;
     
     if (list->sorted > 1)
         error |= LIST_SORTED_RUINED;
@@ -449,10 +455,12 @@ StatusCode ListVerify(List_t *list)
     if (list->front == list->back)
     {   
         if (!(list->data[list->front].next  == 0 &&
-              list->data[list->front].prev  == 0 
+              list->data[list->front].prev  == 0 && 
+              list->size == 1
               ||
               list->data[list->front].prev  == FREE_INDEX &&
-              list->data[list->front].value == DEAD_VALUE))
+              list->data[list->front].value == DEAD_VALUE &&
+              list->size == 0))
             error |= LIST_DATA_RUINED;
         
         for (size_t index = 1; index <= list->capacity; ++index)
@@ -529,6 +537,9 @@ StatusCode ListVerify(List_t *list)
 
     if (list->front == list->back && list->data[list->front].prev != FREE_INDEX)
         size++;
+
+    if (size != list->size)
+        error |= LIST_SIZE_RUINED;
     
     place = list->free;
     
@@ -625,7 +636,11 @@ StatusCode ListDump(List_t *list)
 
     fprintf(dump_file, "    sorted [fillcolor=\"%s\","
                        "    label=\"SORTED = %d\"];\n",
-                       ColorPicker(list, FREE_INDEX / 2), list->sorted);                   
+                       ColorPicker(list, FREE_INDEX / 2), list->sorted);
+
+    fprintf(dump_file, "    sorted [fillcolor=\"%s\","
+                       "    label=\"SIZE = %d\"];\n",
+                       ColorPicker(list, FREE_INDEX / 2), list->size);                     
 
     fputs("    node [color=black, shape=record, style=\"rounded, filled\"];\n", dump_file);
     fputs("\n", dump_file);

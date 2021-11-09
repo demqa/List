@@ -29,16 +29,17 @@ enum StatusCode
     LIST_FRONT_BIGGER_THAN_CTY = 1 << 5,
     LIST_BACK__BIGGER_THAN_CTY = 1 << 6,
 
-    LIST_SORTED_RUINED         = 1 << 7,
-    LIST_FREE_RUINED           = 1 << 8,
+    LIST_SIZE_RUINED           = 1 << 7,
+    LIST_SORTED_RUINED         = 1 << 8,
+    LIST_FREE_RUINED           = 1 << 9,
 
-    LIST_ZERO_INDEX_VAL_RUINED = 1 << 9,
+    LIST_ZERO_INDEX_VAL_RUINED = 1 << 10,
 
-    LIST_INDEXES_RUINED        = 1 << 10,
-    LIST_FRONT_RUINED          = 1 << 11,
-    LIST_BACK_RUINED           = 1 << 12,
+    LIST_INDEXES_RUINED        = 1 << 11,
+    LIST_FRONT_RUINED          = 1 << 12,
+    LIST_BACK_RUINED           = 1 << 13,
 
-    LIST_DATA_RUINED           = 1 << 13,
+    LIST_DATA_RUINED           = 1 << 14,
 
     // PROCESSING_ERRORS
 
@@ -64,6 +65,7 @@ struct List_t
     size_t front;
     size_t back;
 
+    size_t size;
     size_t capacity;
     size_t free;
 
